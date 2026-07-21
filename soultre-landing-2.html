@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoulTré — Sample-based production</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EDE4D3;
+    --paper-2: #E2D3B8;
+    --ink: #1B1611;
+    --ink-soft: #2A231B;
+    --rust: #A8461F;
+    --gold: #C89530;
+    --olive: #5B6A48;
+    --muted: #6B5D4F;
+    --line: rgba(27,22,17,0.15);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+  }
+
+  ::selection{ background:var(--gold); color:var(--ink); }
+
+  .noise{
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+    opacity:0.035; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky; top:0; z-index:20;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 6vw;
+    background:rgba(237,228,211,0.86);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Fraunces', serif; font-weight:600; font-size:1.15rem;
+    letter-spacing:0.02em;
+  }
+  .brand-mark{
+    width:26px; height:26px; border-radius:50%;
+    overflow:hidden; flex-shrink:0;
+    background:var(--ink);
+  }
+  .brand-mark img{ width:100%; height:100%; object-fit:cover; }
+  nav a{
+    color:var(--ink); text-decoration:none; font-size:0.85rem;
+    letter-spacing:0.08em; text-transform:uppercase;
+    border-bottom:1px solid transparent;
+    transition:border-color 0.2s ease;
+  }
+  nav a:hover{ border-color:var(--rust); }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:5vw;
+    padding:9vh 6vw 10vh;
+    max-width:1300px; margin:0 auto;
+    flex-wrap:wrap;
+  }
+  .hero-copy{ flex:1 1 420px; max-width:560px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.78rem; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--rust); margin-bottom:18px; display:block;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(3rem, 8vw, 5.4rem);
+    line-height:0.98;
+    letter-spacing:-0.01em;
+  }
+  h1 em{
+    font-style:italic; font-weight:500; color:var(--rust);
+  }
+  .tagline{
+    margin-top:24px;
+    font-size:1.15rem;
+    line-height:1.55;
+    color:var(--ink-soft);
+    max-width:440px;
+  }
+  .hero-cta{
+    margin-top:38px;
+    display:flex; gap:14px; flex-wrap:wrap;
+  }
+  .btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.9rem;
+    padding:14px 26px; border-radius:2px;
+    text-decoration:none;
+    display:inline-flex; align-items:center; gap:9px;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+    border:1px solid var(--ink);
+  }
+  .btn-solid{ background:var(--ink); color:var(--paper); }
+  .btn-outline{ background:transparent; color:var(--ink); }
+  .btn:hover{ transform:translateY(-2px); box-shadow:3px 4px 0 var(--rust); }
+
+  /* ---------- VINYL ---------- */
+  .vinyl-wrap{
+    flex:0 0 auto;
+    position:relative;
+    width:min(38vw, 380px);
+    aspect-ratio:1/1;
+  }
+  .vinyl{
+    width:100%; height:100%;
+    animation:spin 9s linear infinite;
+    animation-play-state:paused;
+    filter:drop-shadow(10px 14px 0 rgba(27,22,17,0.18));
+  }
+  .vinyl-wrap.spinning .vinyl{ animation-play-state:running; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .tonearm{
+    position:absolute;
+    top:-8%; right:-14%;
+    width:46%;
+    transform-origin:88% 12%;
+    transform:rotate(-32deg);
+    transition:transform 1.1s cubic-bezier(.2,.8,.2,1);
+    filter:drop-shadow(3px 4px 0 rgba(27,22,17,0.2));
+  }
+  .vinyl-wrap.spinning .tonearm{ transform:rotate(-2deg); }
+
+  .vinyl-hint{
+    position:absolute; bottom:-38px; left:50%; transform:translateX(-50%);
+    font-family:'IBM Plex Mono', monospace; font-size:0.7rem;
+    color:var(--muted); letter-spacing:0.1em; text-transform:uppercase;
+    white-space:nowrap; cursor:pointer; background:none; border:none;
+  }
+
+  /* ---------- SECTION SHARED ---------- */
+  section{ padding:10vh 6vw; max-width:1300px; margin:0 auto; }
+  .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.78rem; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:14px; display:block;
+  }
+  h2{
+    font-family:'Fraunces', serif; font-weight:600;
+    font-size:clamp(1.9rem, 4vw, 2.8rem);
+    margin-bottom:2.2rem;
+  }
+
+  /* ---------- COVERS ---------- */
+  .covers{ border-top:1px solid var(--line); }
+  .cover-grid{
+    display:grid; grid-template-columns:repeat(2, minmax(0, 320px)); gap:28px;
+  }
+  .cover-card{ display:flex; flex-direction:column; gap:10px; }
+  .cover-art{
+    aspect-ratio:1/1; position:relative; overflow:hidden;
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:6px 8px 0 rgba(27,22,17,0.12);
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .cover-card:hover .cover-art{ transform:translate(-3px,-3px); box-shadow:9px 11px 0 rgba(27,22,17,0.16); }
+  .cover-art::before{
+    content:''; position:absolute; inset:0;
+    background-image:repeating-linear-gradient(115deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 10px);
+  }
+  .cover-art::after{
+    content:''; position:absolute; right:10%; top:50%; width:26%; aspect-ratio:1/1;
+    transform:translateY(-50%); border-radius:50%;
+    background:var(--paper); border:1px solid rgba(0,0,0,0.2);
+    box-shadow:inset 0 0 0 6px rgba(27,22,17,0.85);
+  }
+  .cover-art--rust{ background:linear-gradient(155deg, var(--rust) 0%, #7A3016 100%); }
+  .cover-art--olive{ background:linear-gradient(155deg, var(--olive) 0%, #3C4630 100%); }
+  .cover-art--gold{ background:linear-gradient(155deg, var(--gold) 0%, #8C6A1F 100%); }
+  .cover-art--photo{ background:var(--ink); }
+  .cover-art--photo img{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+  .cover-art--photo::before, .cover-art--photo::after{ display:none; }
+  .cover-art-mark{
+    position:relative; z-index:1;
+    font-family:'Fraunces', serif; font-weight:600; font-style:italic;
+    font-size:1.6rem; color:var(--paper);
+    letter-spacing:0.02em;
+  }
+  .cover-title{ font-family:'Fraunces', serif; font-size:1.05rem; font-weight:500; }
+  .cover-meta{ font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color:var(--muted); }
+
+  /* ---------- ABOUT ---------- */
+  .about{
+    border-top:1px solid var(--line);
+  }
+  .about-text{ max-width:640px; }
+  .sleeve{
+    aspect-ratio:1/1; position:relative;
+    background:
+      repeating-linear-gradient(135deg, var(--olive) 0 2px, transparent 2px 14px),
+      var(--paper-2);
+    border:1px solid var(--line);
+  }
+  .sleeve::before{
+    content:''; position:absolute; inset:14px;
+    border:1px solid var(--ink); opacity:0.25;
+  }
+  .sleeve::after{
+    content:'AASOM · FANTASTIC T · HOOKED ON YOU';
+    position:absolute; bottom:20px; left:20px; right:20px;
+    font-family:'IBM Plex Mono', monospace; font-size:0.68rem;
+    letter-spacing:0.06em; color:var(--ink-soft); opacity:0.55;
+  }
+  .about-text p{
+    font-size:1.02rem; line-height:1.75; color:var(--ink-soft);
+    margin-bottom:1.2rem; max-width:56ch;
+  }
+  .influences{
+    margin-top:1.8rem; padding-top:1.4rem; border-top:1px dashed var(--line);
+  }
+  .influences-label{
+    font-family:'IBM Plex Mono', monospace; font-size:0.72rem;
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--rust);
+    margin-bottom:0.7rem; display:block;
+  }
+  .influences-list{
+    display:flex; flex-wrap:wrap; gap:10px 24px;
+    font-family:'Fraunces', serif; font-style:italic; font-size:1.05rem;
+    color:var(--ink);
+  }
+
+  /* ---------- DISCOGRAPHY ---------- */
+  .tracklist{ border-top:1px solid var(--line); }
+  .track-row{
+    display:grid;
+    grid-template-columns:44px 1fr auto auto;
+    gap:20px; align-items:baseline;
+    padding:20px 0;
+    border-bottom:1px solid var(--line);
+    text-decoration:none; color:var(--ink);
+    transition:padding-left 0.2s ease, color 0.2s ease;
+  }
+  .track-row:hover{ padding-left:12px; color:var(--rust); }
+  .track-num{ font-family:'IBM Plex Mono', monospace; color:var(--muted); font-size:0.9rem; }
+  .track-title{ font-family:'Fraunces', serif; font-size:1.25rem; font-weight:500; }
+  .track-project{ font-family:'Inter'; font-size:0.85rem; color:var(--muted); }
+  .track-year{ font-family:'IBM Plex Mono', monospace; font-size:0.85rem; color:var(--muted); }
+
+  /* ---------- COLLABS ---------- */
+  .collabs{ border-top:1px solid var(--line); }
+  .collabs-list{
+    display:flex; flex-wrap:wrap; gap:16px;
+  }
+  .collab-item{
+    display:flex; align-items:center;
+    padding:16px 26px;
+    border:1px solid var(--line);
+    min-width:180px; flex:1 1 200px;
+    transition:border-color 0.2s ease, transform 0.15s ease;
+  }
+  .collab-item:hover{ border-color:var(--rust); transform:translateY(-2px); }
+  .collab-name{ font-family:'Fraunces', serif; font-style:italic; font-weight:500; font-size:1.2rem; }
+
+  /* ---------- LISTEN ---------- */
+  .listen{
+    border-top:1px solid var(--line);
+    text-align:center;
+  }
+  .listen h2{ margin-bottom:0.6rem; }
+  .listen p{ color:var(--ink-soft); max-width:48ch; margin:0 auto 2.6rem; font-size:1.02rem; }
+  .platforms{
+    display:flex; gap:16px; justify-content:center; flex-wrap:wrap;
+  }
+  .platform-card{
+    display:flex; align-items:center; gap:12px;
+    padding:18px 28px;
+    border:1px solid var(--ink); border-radius:2px;
+    text-decoration:none; color:var(--ink);
+    font-weight:600; font-size:0.95rem;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .platform-card:hover{ transform:translateY(-2px); box-shadow:3px 4px 0 var(--gold); }
+  .dot{ width:9px; height:9px; border-radius:50%; }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:5vh 6vw 6vh;
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:14px;
+    font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color:var(--muted);
+  }
+  footer a{ color:var(--muted); text-decoration:none; border-bottom:1px solid var(--line); }
+  footer a:hover{ color:var(--rust); border-color:var(--rust); }
+  .footer-links{ display:flex; gap:18px; }
+
+  @media (max-width:800px){
+    .about{ grid-template-columns:1fr; }
+    .sleeve{ max-width:280px; }
+    .hero{ padding-top:6vh; }
+    .track-row{ grid-template-columns:32px 1fr; row-gap:4px; }
+    .track-year, .track-project{ grid-column:2; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .vinyl, .tonearm, html{ animation:none !important; transition:none !important; scroll-behavior:auto; }
+  }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<nav>
+  <div class="brand"><span class="brand-mark"><img src="soultre-logo.jpg" alt="SoulTré logo"></span>SoulTré</div>
+  <a href="#listen">Listen</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow">Houston, TX · Producer</span>
+    <h1>Old records, <em>new</em> feelings.</h1>
+    <p class="tagline">SoulTré flips soul, funk and jazz samples into hip-hop and R&B — built from crates.</p>
+    <div class="hero-cta">
+      <a class="btn btn-solid" href="#listen">Listen now</a>
+      <a class="btn btn-outline" href="https://instagram.com/prodbysoultre" target="_blank" rel="noopener">Follow the process</a>
+    </div>
+  </div>
+
+  <div class="vinyl-wrap" id="vinylWrap">
+    <svg class="tonearm" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="170" cy="24" r="13" fill="none" stroke="#1B1611" stroke-width="4"/>
+      <rect x="163" y="30" width="14" height="120" rx="4" fill="#1B1611"/>
+      <rect x="150" y="145" width="40" height="14" rx="3" fill="#A8461F"/>
+      <circle cx="170" cy="24" r="4" fill="#1B1611"/>
+    </svg>
+    <svg class="vinyl" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="200" cy="200" r="196" fill="#15100C"/>
+      <circle cx="200" cy="200" r="176" fill="none" stroke="#2A231B" stroke-width="1"/>
+      <circle cx="200" cy="200" r="150" fill="none" stroke="#2A231B" stroke-width="1"/>
+      <circle cx="200" cy="200" r="124" fill="none" stroke="#2A231B" stroke-width="1"/>
+      <circle cx="200" cy="200" r="98" fill="none" stroke="#2A231B" stroke-width="1"/>
+      <circle cx="200" cy="200" r="74" fill="#C89530"/>
+      <path id="labelCurveTop" d="M 200,140 a 60,60 0 1,1 -0.1,0" fill="none"/>
+      <text font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="3" fill="#1B1611">
+        <textPath href="#labelCurveTop" startOffset="0%">SOULTRÉ &#8226; SAMPLE-BASED &#8226; </textPath>
+      </text>
+      <circle cx="200" cy="200" r="5" fill="#EDE4D3"/>
+    </svg>
+    <button class="vinyl-hint" id="vinylHint" aria-label="Play preview animation">&#9656; drop the needle</button>
+  </div>
+</section>
+
+
+<section class="about" id="about">
+  <div class="about-text">
+    <h2>The Story</h2>
+    <p>Tremaine Chappell, better known as SoulTré, is based in Houston and was shaped early by '70s soul, jazz and funk. He built his first beat in GarageBand for a song called "Get Down" — the first track he ever put out publicly. Since then his ear has stretched across R&B, hip-hop and beyond, always led by the source material rather than a single genre.</p>
+    <p>His catalog spans full projects like <em>Fantastic T</em>, the <em>Hooked On You</em> EP, and the original score for the documentary <em>An Adolescent's State of Mind</em> — plus collaborations with artists like Jae the Lyoness and LIVE 4EVA.</p>
+  </div>
+</section>
+
+<section class="covers" id="covers">
+  <h2>The Catalog</h2>
+  <div class="cover-grid">
+    <div class="cover-card">
+      <div class="cover-art cover-art--photo">
+        <img src="fantastic-t-cover.jpg" alt="Fantastic T Vol. 1 cover art">
+      </div>
+      <span class="cover-title">Fantastic T</span>
+      <span class="cover-meta">Album · 2024</span>
+    </div>
+    <div class="cover-card">
+      <div class="cover-art cover-art--photo">
+        <img src="aasom-cover.jpg" alt="An Adolescent's State of Mind cover art">
+      </div>
+      <span class="cover-title">An Adolescent's State of Mind</span>
+      <span class="cover-meta">OST · 2020</span>
+    </div>
+  </div>
+</section>
+
+<section class="tracklist" id="discography">
+  <h2>Recent work</h2>
+
+  <a class="track-row" href="https://open.spotify.com/artist/0o7KuuNjRSmasrCjzYvbdq" target="_blank" rel="noopener">
+    <span class="track-num">01</span>
+    <span class="track-title">One Mo Time</span>
+    <span class="track-project">from Luv On Both Sides</span>
+    <span class="track-year">2024</span>
+  </a>
+  <a class="track-row" href="https://music.apple.com/us/album/hooked-on-you-ep/1694170672" target="_blank" rel="noopener">
+    <span class="track-num">02</span>
+    <span class="track-title">Hooked On You</span>
+    <span class="track-project">EP</span>
+    <span class="track-year">2023</span>
+  </a>
+  <a class="track-row" href="https://music.apple.com/us/album/amav%C3%A9l-feat-kamkloud9-single/1683442171" target="_blank" rel="noopener">
+    <span class="track-num">03</span>
+    <span class="track-title">Amavél</span>
+    <span class="track-project">feat. KamKloud9</span>
+    <span class="track-year">2023</span>
+  </a>
+  <a class="track-row" href="https://music.apple.com/us/album/get-down-feat-jae-the-lyoness-single/1673635375" target="_blank" rel="noopener">
+    <span class="track-num">04</span>
+    <span class="track-title">Get Down</span>
+    <span class="track-project">feat. Jae the Lyoness</span>
+    <span class="track-year">2019</span>
+  </a>
+</section>
+
+<section class="collabs" id="collabs">
+  <h2>Artists Worked With</h2>
+  <div class="collabs-list">
+    <div class="collab-item">
+      <span class="collab-name">Jae the Lyoness</span>
+    </div>
+    <div class="collab-item">
+      <span class="collab-name">LIVE 4EVA</span>
+    </div>
+    <div class="collab-item">
+      <span class="collab-name">KamKloud9</span>
+    </div>
+    <div class="collab-item">
+      <span class="collab-name">Regjee</span>
+    </div>
+    <div class="collab-item">
+      <span class="collab-name">TZodiak</span>
+    </div>
+  </div>
+</section>
+
+<section class="listen" id="listen">
+  <h2>Press Play</h2>
+  <p>New flips land regularly, everywhere you already listen — follow along on your platform of choice.</p>
+  <div class="platforms">
+    <a class="platform-card" href="https://open.spotify.com/artist/0o7KuuNjRSmasrCjzYvbdq" target="_blank" rel="noopener">
+      <span class="dot" style="background:#1DB954"></span>Spotify
+    </a>
+    <a class="platform-card" href="https://music.apple.com/us/artist/soultre/1474318207" target="_blank" rel="noopener">
+      <span class="dot" style="background:#FA57C1"></span>Apple Music
+    </a>
+    <a class="platform-card" href="https://instagram.com/prodbysoultre" target="_blank" rel="noopener">
+      <span class="dot" style="background:#A8461F"></span>Instagram
+    </a>
+  </div>
+</section>
+
+<footer>
+  <span>&copy; SoulTré. Built from crates.</span>
+  <div class="footer-links">
+    <a href="https://instagram.com/prodbysoultre" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://twitter.com/SoulbrothaT" target="_blank" rel="noopener">X</a>
+  </div>
+</footer>
+
+<script>
+  const wrap = document.getElementById('vinylWrap');
+  const hint = document.getElementById('vinylHint');
+  let spinning = false;
+  function toggleSpin(){
+    spinning = !spinning;
+    wrap.classList.toggle('spinning', spinning);
+    hint.textContent = spinning ? '❙❙ pause' : '▶ drop the needle';
+  }
+  hint.addEventListener('click', toggleSpin);
+  setTimeout(()=>{ if(!spinning) toggleSpin(); }, 900);
+</script>
+
+</body>
+</html>
